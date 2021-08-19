@@ -83,7 +83,7 @@ def create_user(user: schema.UserCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/users/", response_model= List[schema.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
+def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), admin: User = Depends(get_current_active_user)):
     if admin:
         users = crud.get_users(db, skip=skip, limit=limit)
         return users
