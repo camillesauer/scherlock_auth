@@ -6,6 +6,7 @@ from passlib.context import CryptContext
 from schema import *
 from sqlalchemy.orm import Session
 import pyotp
+from typing import List
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -21,7 +22,7 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(User).offset(skip).limit(limit).all()
 
 
-def create_user(db: Session, user: schema.UserCreate):
+def create_user(db: Session, user: UserCreate):
     hashed_password = pwd_context.hash(user.password)
     db_user = User(
         username=user.username,
@@ -35,20 +36,20 @@ def create_user(db: Session, user: schema.UserCreate):
     return db_user
 
 
-def delete_user(db: Session, db_user:User):
+def delete_user(db: Session, db_user: User):
     db.delete(db_user)
     db.commit()
     return "Successfully deleted"
 
 
-def update_user(db : Session, db_user : User, new_username : str):
+def update_user(db : Session, db_user: User, new_username: str):
     db_user.username = new_username
     db.commit()
     db.refresh(db_user)
     return "Successfully updated!"
 
 
-def update_user_self(db: Session, current_user: schema.User, user_update: schema.UserUpdate):
+def update_user_self(db: Session, current_user: User, user_update: UserUpdate):
     db_user = get_user(db, current_user.id)
     db_user.username = user_update.new_username
     db_user.hashed_password = pwd_context.hash(user_update.password)
@@ -57,7 +58,7 @@ def update_user_self(db: Session, current_user: schema.User, user_update: schema
     return db_user
 
 
-def create_feeling(db: Session, message: schema.MessageCreate, user_id:int):
+def create_feeling(db: Session, message: MessageCreate, user_id: int):
     db_message = Message(description=message.description, user_id=user_id)
     db.add(db_message)
     db.commit()

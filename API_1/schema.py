@@ -51,7 +51,7 @@ class MessageBase(BaseModel):
     pass
 
 
-class Feeling(MessageBase):
+class Message(MessageBase):
     id: int
     date: datetime
     description: str
@@ -59,6 +59,7 @@ class Feeling(MessageBase):
 
     class Config:
         orm_mode = True
+
 
 class MessageCreate(MessageBase):
     description: str

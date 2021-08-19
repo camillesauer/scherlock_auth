@@ -1,12 +1,18 @@
-from crud import Token, authenticate_user, Session, create_access_token, timedelta, get_current_active_user, get_db
-from crud import *
-import crud
 import schema
 from database import SessionLocal
+from sqlalchemy.orm import Session
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from crud import oauth2_scheme, create_access_token, timedelta
 from model import User, Message
+from jose import JWTError, jwt
 from typing import List
+import model
+from database import engine
+import crud
+
+
+model.Base.metadata.create_all(bind=engine)
 
 # to get a string like this run:
 # openssl rand -hex 32
@@ -76,7 +82,7 @@ def create_user(user: schema.UserCreate, db: Session = Depends(get_db)):
     return crud.create_user(db=db, user=user)
 
 
-@app.get("/users/", response_model=List[User])
+@app.get("/users/", response_model= List[schema.User])
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), admin: User = Depends(get_admin_user)):
     if admin:
         users = crud.get_users(db, skip=skip, limit=limit)
@@ -129,7 +135,7 @@ def update_my_info(user: schema.UserUpdate, db: Session = Depends(get_db), curre
 def create_message(message: schema.MessageCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
     return crud.create_message(db, message, current_user.id)
 
-
+"""
 @app.get("/messages", response_model=List[schema.MessageBase])
 def read_all_messages(db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)):
     if current_user:
@@ -139,7 +145,7 @@ def read_all_messages(db: Session = Depends(get_db), current_user: User = Depend
         return db_message
     else:
         raise HTTPException(status_code=403, detail="Operation not permitted")
-
+"""
 
 @app.post("/login", response_model=schema.Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
