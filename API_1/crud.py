@@ -1,30 +1,28 @@
-from api_routes import *
-from fastapi.security import OAuth2PasswordBearer
-from datetime import timedelta
-from jose import jwt
-from passlib.context import CryptContext
-from schema import *
 from sqlalchemy.orm import Session
+import models
+import schemas
 import pyotp
-from typing import List
+from security import pwd_context
+from datetime import datetime, timedelta
+from typing import Optional
+from jose import JWTError, jwt
 
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+SECRET_KEY = "b0a08b8aedbfc2d7b98113e72abb8748555d7173e876cadbdadd62d703cf4bce"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 def get_user_by_username(db: Session, username: str):
-    return db.query(User).filter(User.username == username).first()
+    return db.query(models.User).filter(models.User.username == username).first()
 
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(User).offset(skip).limit(limit).all()
+    return db.query(models.User).offset(skip).limit(limit).all()
 
 
-def create_user(db: Session, user: UserCreate):
+def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = pwd_context.hash(user.password)
-    db_user = User(
+    db_user = models.User(
         username=user.username,
         hashed_password=hashed_password,
         otp_secret=pyotp.random_base32(),
@@ -36,38 +34,26 @@ def create_user(db: Session, user: UserCreate):
     return db_user
 
 
-def delete_user(db: Session, db_user: User):
+def delete_user(db: Session, db_user:models.User):
     db.delete(db_user)
     db.commit()
     return "Successfully deleted"
 
 
-def update_user(db : Session, db_user: User, new_username: str):
+def update_user(db : Session, db_user : models.User, new_username : str):
     db_user.username = new_username
     db.commit()
     db.refresh(db_user)
     return "Successfully updated!"
 
 
-def update_user_self(db: Session, current_user: User, user_update: UserUpdate):
+def update_user_self(db: Session, current_user: schemas.User, user_update: schemas.UserUpdate):
     db_user = get_user(db, current_user.id)
     db_user.username = user_update.new_username
     db_user.hashed_password = pwd_context.hash(user_update.password)
     db.commit()
     db.refresh(db_user)
     return db_user
-
-
-def create_feeling(db: Session, message: MessageCreate, user_id: int):
-    db_message = Message(description=message.description, user_id=user_id)
-    db.add(db_message)
-    db.commit()
-    db.refresh(db_message)
-    return db_message
-
-
-def get_feelings_by_user_id(db: Session, user_id: int):
-    return db.query(Message).filter(Message.user_id == user_id).all()
 
 
 def verify_password(plain_password, hashed_password):
@@ -79,7 +65,7 @@ def get_password_hash(password):
 
 
 def get_user(db, user_id: int):
-    return db.get(User, user_id)
+    return db.get(models.User, user_id)
 
 
 def authenticate_user(db, username: str, password: str):

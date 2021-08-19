@@ -1,7 +1,6 @@
-from pydantic import BaseModel
-from typing import Optional
 from enum import Enum
-from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel
 
 
 class Token(BaseModel):
@@ -11,19 +10,6 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: Optional[str] = None
-
-
-class User(BaseModel):
-    id: int
-    username: str
-    disabled: bool = False
-
-    class Config:
-        orm_mode = True
-
-
-class UserInDB(User):
-    hashed_password: str
 
 
 class Role(str, Enum):
@@ -47,19 +33,14 @@ class UserUpdate(UserBase):
     id: int
 
 
-class MessageBase(BaseModel):
-    pass
-
-
-class Message(MessageBase):
+class User(UserBase):
     id: int
-    date: datetime
-    description: str
-    user_id: int
+    username: str
+    disabled: bool = False
 
     class Config:
         orm_mode = True
 
 
-class MessageCreate(MessageBase):
-    description: str
+class UserInDB(User):
+    hashed_password: str
