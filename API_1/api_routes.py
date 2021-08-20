@@ -38,10 +38,6 @@ def hello():
 
 # Dependency
 def get_db():
-    """
-    I connect my db to my api
-    :return:
-    """
     db = SessionLocal()
     try:
         yield db
@@ -50,12 +46,6 @@ def get_db():
 
 
 async def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
-    """
-    I check if the user has an account
-    :param db:
-    :param token:
-    :return:
-    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -77,20 +67,12 @@ async def get_current_user(db: Session = Depends(get_db), token: str = Depends(o
 
 
 async def get_current_active_user(current_user: models.User = Depends(get_current_user)):
-    """
-    I check if the user is a user with a user role and not an admin
-    :param current_user:
-    :return:
-    """
     if current_user.disabled:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
 
 async def get_admin_user(admin_user: models.User = Depends(get_current_active_user)):
-    """
-    I check if a user is an admin
-    """
     if admin_user.role == 'admin':
         return admin_user
     raise HTTPException(status_code=400, detail="User not admin!")
@@ -98,9 +80,6 @@ async def get_admin_user(admin_user: models.User = Depends(get_current_active_us
 
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    """
-    I create a user
-    """
     db_user = crud.get_user_by_username(db, username=user.username)
     if db_user:
         raise HTTPException(status_code=400, detail="User already registered")
@@ -109,14 +88,6 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @app.get("/users/", response_model=List[schemas.User])
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), admin: models.User = Depends(get_admin_user)):
-    """
-    Only the administrator can have the list of users
-    :param skip:
-    :param limit:
-    :param db:
-    :param admin:
-    :return:
-    """
     if admin:
         users = crud.get_users(db, skip=skip, limit=limit)
         return users
@@ -126,13 +97,6 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), a
 
 @app.get("/users/{user_id}", response_model=schemas.User)
 def read_user(user_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_admin_user)):
-    """
-    I visualize a user
-    :param user_id:
-    :param db:
-    :param admin:
-    :return:
-    """
     if admin:
         db_user = crud.get_user(db, user_id=user_id)
         if db_user is None:
@@ -143,13 +107,6 @@ def read_user(user_id: int, db: Session = Depends(get_db), admin: models.User = 
 
 @app.delete("/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db), admin: models.User = Depends(get_admin_user)):
-    """
-    I delete a user as an administrator
-    :param user_id:
-    :param db:
-    :param admin:
-    :return:
-    """
     if admin:
         db_user = crud.get_user(db, user_id=user_id)
         if db_user:
@@ -162,12 +119,6 @@ def delete_user(user_id: int, db: Session = Depends(get_db), admin: models.User 
 
 @app.patch("/users/", response_model=str)
 def update_user(user: schemas.UserUpdate, db: Session = Depends(get_db), admin: models.User = Depends(get_admin_user)):
-    """
-    I update information of users as admin
-    :param user:
-    :param db:
-    :return:
-    """
     if admin:
         db_user = crud.get_user(db=db, user_id=user.id)
         if db_user:
