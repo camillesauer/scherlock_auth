@@ -204,3 +204,19 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@app.post("/messages", response_model=schemas.Message)
+def create_message(message: schemas.MessageCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_active_user)):
+    return crud.create_message(db, message, current_user.id)
+
+
+@app.get("/messages", response_model=List[schemas.Message])
+def read_all_messages(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_active_user)):
+    if current_user:
+        db_message = crud.get_messages_by_user_id(db, user_id=current_user.id)
+        if db_message is None:
+            raise HTTPException(status_code=404, detail="Message not found")
+        return db_message
+    else:
+        raise HTTPException(status_code=403, detail="Operation not permitted")

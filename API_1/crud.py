@@ -77,6 +77,19 @@ def authenticate_user(db, username: str, password: str):
     return user
 
 
+def create_message(db: Session, message: schemas.MessageCreate, user_id: int):
+    db_message = models.Message(description=message.description, user_id=user_id)
+    db.add(db_message)
+    db.commit()
+    db.refresh(db_message)
+    print(db_message)
+    return db_message
+
+
+def get_messages_by_user_id(db: Session, user_id: int):
+    return db.query(models.Message).filter(models.Message.user_id == user_id).all()
+
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
@@ -86,3 +99,4 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+

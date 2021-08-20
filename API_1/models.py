@@ -14,3 +14,16 @@ class User(Base):
     otp_secret = Column(String(100))
     disabled = Column(Boolean, default=False)
     role = Column(Enum(Role))
+
+items_message = relationship("Message", back_populates="mess")
+
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    description = Column(String(100), index=True)
+    date = Column(DateTime(timezone=True), server_default=func.now())
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    mess = relationship("User", back_populates="items_message")
